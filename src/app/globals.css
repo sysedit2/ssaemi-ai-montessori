@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@media print {
+  header, button { display: none !important; }
+  main { padding: 0 !important; }
+}

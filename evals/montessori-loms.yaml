@@ -1,0 +1,75 @@
+# OpenAI Evals Registry — LOMS 몬테소리 관찰 품질 검증
+# Model-graded eval: GPT-4o가 Gemma 4 분석을 채점
+# 참조: https://github.com/openai/evals
+
+eval_id: montessori_loms_v1
+description: >
+  LOMS(학습 관찰 관리 시스템) 분석 품질을 5개 차원에서
+  GPT-4o가 모델 채점(model-graded)하는 Evals 설정.
+  Gemma 4 로컬 분석 결과를 입력으로 받아 몬테소리 전문가 루브릭에 따라 평가.
+
+model_grader: gpt-4o
+temperature: 0.0
+max_tokens: 512
+
+dimensions:
+  - id: area_classification
+    name: 5대 영역 분류 정확도
+    weight: 0.25
+    rubric:
+      5: "5대 영역 모두 정확히 분류, 구체적 교구명과 행동 근거 포함"
+      4: "4개 영역 정확, 1개 경미한 오류"
+      3: "3개 영역 정확, 전반적 방향은 맞음"
+      2: "2개 이하 정확"
+      1: "영역 분류 이해 부족"
+
+  - id: sensitive_period_detection
+    name: 민감기 신호 탐지
+    weight: 0.25
+    rubric:
+      5: "민감기 신호 + 구체적 행동 증거 3개 이상 + 교육적 대응 제안"
+      4: "신호 탐지 + 행동 증거 1-2개"
+      3: "신호 탐지만, 증거 없음"
+      2: "부분 탐지"
+      1: "탐지 실패 또는 비근거 추측"
+
+  - id: developmental_inference
+    name: 발달 단계 추론 타당성
+    weight: 0.20
+    rubric:
+      5: "몬테소리 발달 단계와 완전히 일치, 다음 단계 정확한 제안"
+      4: "대체로 일치, 미세한 단계 오차"
+      3: "일반적으로 맞음"
+      2: "피상적 추론"
+      1: "발달 단계 오해 또는 진단적 표현 사용"
+
+  - id: language_appropriateness
+    name: 관찰자 어조 적절성
+    weight: 0.15
+    rubric:
+      5: "완전한 관찰자 어조, 비진단, 따뜻함과 전문성 균형"
+      4: "관찰자 어조 유지, 경미한 판단 표현 1회"
+      3: "주로 관찰자 어조, 일부 평가적 표현"
+      2: "여러 평가적/진단적 표현"
+      1: "평가·진단 위주 어조"
+
+  - id: actionability
+    name: 교사·학부모 실행 가능성
+    weight: 0.15
+    rubric:
+      5: "즉시 실행 가능한 구체적 제안 2개 이상"
+      4: "실행 가능한 제안 1개 + 방향 제시"
+      3: "일반적 방향 제시만"
+      2: "모호한 제안"
+      1: "실행 가능성 없음"
+
+scoring:
+  method: weighted_average
+  scale: 1-5
+  pass_threshold: 3.5
+  excellence_threshold: 4.5
+
+output_metrics:
+  - inference_accuracy     # 0-100, Evals 종합 채점 기반
+  - montessori_alignment   # 0-100, 전문가 루브릭 일치도
+  - observer_tone_score    # 0-100, 어조 적절성
