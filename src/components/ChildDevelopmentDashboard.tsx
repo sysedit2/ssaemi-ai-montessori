@@ -59,20 +59,24 @@ const AREA_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ef4444"];
 export default function ChildDevelopmentDashboard({
   current, ageGroup, history = [], onExportPDF, onSave, isSaving, saveSuccess,
 }: Props) {
-  const areaData = Object.entries(current.area_engagement).map(([key, val], i) => ({
+  const areaData = Object.entries(current.area_engagement ?? {}).map(([key, val], i) => ({
     area: AREA_LABELS[key] ?? key,
-    score: val.score,
+    score: (val as { score: number })?.score ?? 0,
     fill: AREA_COLORS[i],
   }));
 
-  const radarData = Object.entries(current.developmental_scales).map(([key, val]) => ({
+  const radarData = Object.entries(current.developmental_scales ?? {}).map(([key, val]) => ({
     subject: SCALE_LABELS[key] ?? key,
-    value: val as number,
+    value: (val as number) ?? 0,
     fullMark: 5,
   }));
 
-  const avgAreaScore = (areaData.reduce((s, d) => s + d.score, 0) / areaData.length).toFixed(1);
-  const avgScaleScore = (radarData.reduce((s, d) => s + d.value, 0) / radarData.length).toFixed(1);
+  const avgAreaScore = areaData.length
+    ? (areaData.reduce((s, d) => s + d.score, 0) / areaData.length).toFixed(1)
+    : "0.0";
+  const avgScaleScore = radarData.length
+    ? (radarData.reduce((s, d) => s + d.value, 0) / radarData.length).toFixed(1)
+    : "0.0";
 
   const trendData = history.map((h) => {
     const p = h.structured_payload;
@@ -131,20 +135,20 @@ export default function ChildDevelopmentDashboard({
         <SummaryCard label="발달 척도 평균" value={`${avgScaleScore} / 5`} color="sky" />
         <SummaryCard
           label="민감기 신호"
-          value={`${current.sensitive_period_signals.length}개`}
+          value={`${(current.sensitive_period_signals ?? []).length}개`}
           color="amber"
         />
         <SummaryCard
           label="추천 교구"
-          value={`${current.recommended_materials.length}개`}
+          value={`${(current.recommended_materials ?? []).length}개`}
           color="purple"
         />
       </div>
 
       {/* 주목 플래그 */}
-      {current.attention_flags.length > 0 && (
+      {(current.attention_flags ?? []).length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {current.attention_flags.map((flag, i) => (
+          {(current.attention_flags ?? []).map((flag, i) => (
             <div
               key={i}
               className={`flex items-start gap-2 border rounded-xl px-3 py-2 text-sm ${FLAG_STYLE[flag.flag_type]}`}
@@ -197,25 +201,29 @@ export default function ChildDevelopmentDashboard({
       {/* 영역별 세부 행동 */}
       <ChartCard title="영역별 관찰 세부 내용">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pt-2">
-          {Object.entries(current.area_engagement).map(([key, val], i) => (
+          {Object.entries(current.area_engagement ?? {}).map(([key, val], i) => (
             <div key={key} className="rounded-xl border border-slate-100 bg-slate-50 p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">{AREA_LABELS[key]}</span>
-                <ScoreBadge score={val.score} color={AREA_COLORS[i]} />
+                <ScoreBadge score={(val as { score: number })?.score ?? 0} color={AREA_COLORS[i]} />
               </div>
-              {val.materials_used.length > 0 && (
+              {((val as { materials_used?: string[] })?.materials_used ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {val.materials_used.map((m, j) => (
+                  {((val as { materials_used?: string[] })?.materials_used ?? []).map((m, j) => (
                     <span key={j} className="text-xs bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-600">
                       {m}
                     </span>
                   ))}
                 </div>
               )}
-              {val.observed_behaviors.slice(0, 2).map((b, j) => (
+              {((val as { observed_behaviors?: string[] })?.observed_behaviors ?? []).slice(0, 2).map((b, j) => (
                 <p key={j} className="text-xs text-slate-600 leading-relaxed">• {b}</p>
               ))}
-              {val.notes && <p className="text-xs text-slate-500 italic border-t border-slate-200 pt-2">{val.notes}</p>}
+              {(val as { notes?: string })?.notes && (
+                <p className="text-xs text-slate-500 italic border-t border-slate-200 pt-2">
+                  {(val as { notes?: string }).notes}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -240,10 +248,10 @@ export default function ChildDevelopmentDashboard({
       )}
 
       {/* 민감기 신호 */}
-      {current.sensitive_period_signals.length > 0 && (
+      {(current.sensitive_period_signals ?? []).length > 0 && (
         <ChartCard title="민감기 신호 분석">
           <div className="space-y-3 pt-2">
-            {current.sensitive_period_signals.map((s, i) => (
+            {(current.sensitive_period_signals ?? []).map((s, i) => (
               <div key={i} className={`border rounded-xl p-4 space-y-2 ${CONFIDENCE_STYLE[s.confidence]}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">{s.period_name}</span>
@@ -267,7 +275,7 @@ export default function ChildDevelopmentDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ChartCard title="다음 단계 추천 교구">
           <div className="space-y-3 pt-2">
-            {current.recommended_materials.map((m, i) => (
+            {(current.recommended_materials ?? []).map((m, i) => (
               <div key={i} className="flex gap-3 items-start border border-slate-100 rounded-xl p-3 bg-slate-50">
                 <span className="text-xl">📦</span>
                 <div>
@@ -283,7 +291,7 @@ export default function ChildDevelopmentDashboard({
 
         <ChartCard title="교사 후속 관찰 포인트">
           <ul className="space-y-2.5 pt-2">
-            {current.follow_up_actions.map((a, i) => (
+            {(current.follow_up_actions ?? []).map((a, i) => (
               <li key={i} className="flex gap-3 items-start text-sm text-slate-700">
                 <span className="w-6 h-6 flex-shrink-0 bg-emerald-100 text-emerald-700 font-bold text-xs rounded-full flex items-center justify-center">
                   {i + 1}

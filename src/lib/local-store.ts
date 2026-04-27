@@ -17,6 +17,7 @@ export interface ObservationEntry {
   age_group: AgeGroup;
   observed_at: string;
   structured_payload: ObservationResult;
+  journal_text?: string;   // 원문 관찰일지 (선택 저장)
 }
 
 function read<T>(key: string, fallback: T): T {
@@ -63,7 +64,8 @@ export function getObservations(childId: string): ObservationEntry[] {
 export function saveObservation(
   childId: string,
   ageGroup: AgeGroup,
-  result: ObservationResult
+  result: ObservationResult,
+  journalText?: string
 ): ObservationEntry {
   const entry: ObservationEntry = {
     id: crypto.randomUUID(),
@@ -71,6 +73,7 @@ export function saveObservation(
     age_group: ageGroup,
     observed_at: result.observed_at_iso,
     structured_payload: result,
+    journal_text: journalText,
   };
   const all = read<ObservationEntry[]>(OBS_KEY, []);
   write(OBS_KEY, [entry, ...all]);

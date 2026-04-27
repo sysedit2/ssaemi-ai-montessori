@@ -50,7 +50,7 @@ export default function HomePage() {
     if (!result || !selectedChild) return;
     setIsSaving(true);
     try {
-      saveObservation(selectedChild.id, ageGroup, result);
+      saveObservation(selectedChild.id, ageGroup, result, journalSnapshot);
       setSaveSuccess(true);
       setRefreshHistory(n => n + 1);
     } finally {
@@ -93,6 +93,7 @@ export default function HomePage() {
   function handleHistorySelect(entry: ObservationEntry) {
     setResult(entry.structured_payload);
     setAgeGroup(entry.age_group as AgeGroup);
+    if (entry.journal_text) setJournalSnapshot(entry.journal_text);
     setActiveTab("dashboard");
     setSaveSuccess(true);
   }
